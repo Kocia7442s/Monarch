@@ -72,7 +72,7 @@ export function gainXP(player, amount, skillDefs) {
     player.skills = unlockedSkillKeys(skillDefs, player.stats.level);
     for (const key of player.skills) {
       if (!had.has(key)) {
-        events.push({ type: 'skillUnlock', key, name: skillDefs[key].name });
+        events.push({ type: 'skillUnlock', key });
       }
     }
   }

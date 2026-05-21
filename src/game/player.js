@@ -1,6 +1,7 @@
 import { moveAndCollide } from '../engine/collision.js';
 import { drawCharacter } from './character-sprite.js';
 import { unlockedSkillKeys } from '../systems/progression.js';
+import { t } from '../systems/lang.js';
 
 const SPEED = 90; // pixels per second
 const WALK_FRAME_TIME = 0.14;
@@ -25,7 +26,7 @@ export function createPlayer(x, y, skillDefs) {
     moving: false,
     walkTime: 0,
     stats: {
-      name: 'Hunter',
+      name: t('player.name'),
       level: 1,
       xp: 0,
       gold: 0,

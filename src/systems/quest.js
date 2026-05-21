@@ -1,3 +1,5 @@
+import { t } from './lang.js';
+
 // Quest tracking. Quest state lives on the player: `player.quests` is an array
 // of { id, progress, complete }. Each `record*` call returns events the caller
 // turns into [SYSTEM] notifications and reward applications.
@@ -55,7 +57,6 @@ function completeEvent(id, def) {
   return {
     type: 'quest-complete',
     id,
-    name: def.name,
     xp: def.rewardXp ?? 0,
     gold: def.rewardGold ?? 0,
   };
@@ -63,11 +64,11 @@ function completeEvent(id, def) {
 
 // Pretty-print quest status. Used by quest-ui.js.
 export function describeProgress(q, def, player) {
-  if (q.complete) return 'Complete';
+  if (q.complete) return t('ui.quest.complete');
   switch (def.type) {
-    case 'kill':  return `${q.progress}/${def.count}`;
-    case 'level': return `Lv ${player.stats.level} / Lv ${def.level}`;
-    case 'clear': return 'In progress';
+    case 'kill':  return t('ui.quest.killProgress', { progress: q.progress, count: def.count });
+    case 'level': return t('ui.quest.levelProgress', { current: player.stats.level, target: def.level });
+    case 'clear': return t('ui.quest.inProgress');
     default:      return '';
   }
 }

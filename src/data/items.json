@@ -1,7 +1,7 @@
 {
-  "hpPotion":    { "name": "HP Potion",    "type": "consumable", "effect": "heal-hp",     "amount": 25, "price": 15, "desc": "Restores 25 HP." },
-  "mpPotion":    { "name": "MP Potion",    "type": "consumable", "effect": "heal-mp",     "amount": 15, "price": 25, "desc": "Restores 15 MP." },
-  "antidote":    { "name": "Antidote",     "type": "consumable", "effect": "cure-poison",               "price": 10, "desc": "Cures poison." },
-  "rustyBlade":  { "name": "Rusty Blade",  "type": "weapon",     "bonus": { "atk": 3 },                 "price": 50, "desc": "A basic sword. +3 ATK." },
-  "leatherVest": { "name": "Leather Vest", "type": "armor",      "bonus": { "def": 2 },                 "price": 40, "desc": "Worn but sturdy. +2 DEF." }
+  "hpPotion":    { "type": "consumable", "effect": "heal-hp",     "amount": 25, "price": 15 },
+  "mpPotion":    { "type": "consumable", "effect": "heal-mp",     "amount": 15, "price": 25 },
+  "antidote":    { "type": "consumable", "effect": "cure-poison",               "price": 10 },
+  "rustyBlade":  { "type": "weapon",     "bonus": { "atk": 3 },                 "price": 50 },
+  "leatherVest": { "type": "armor",      "bonus": { "def": 2 },                 "price": 40 }
 }

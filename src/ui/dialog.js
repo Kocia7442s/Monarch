@@ -1,5 +1,6 @@
 import { LOGICAL_WIDTH, LOGICAL_HEIGHT } from '../engine/canvas.js';
 import { drawPanel } from './panel.js';
+import { t } from '../systems/lang.js';
 
 const CHARS_PER_SEC = 50;
 const PADDING = 8;
@@ -78,7 +79,7 @@ export function createDialog() {
 
       if (this.isPageComplete()) {
         const isLast = this.pageIndex >= this.pages.length - 1;
-        const prompt = isLast ? '[E] close' : '[E] next';
+        const prompt = isLast ? t('ui.dialog.close') : t('ui.dialog.next');
         ctx.fillStyle = '#9070d0';
         const tw = ctx.measureText(prompt).width;
         ctx.fillText(prompt, x + w - tw - 10, y + h - 18);

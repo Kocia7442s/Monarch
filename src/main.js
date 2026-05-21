@@ -7,6 +7,7 @@ import { createTransition, warpAt } from './maps/warp.js';
 import { createPlayer } from './game/player.js';
 import { createNPC, findInteractable } from './game/npc.js';
 import { createEnemy, overlap } from './game/enemy.js';
+import { createShadow } from './game/shadow.js';
 import { createDialog } from './ui/dialog.js';
 import { createBattle } from './systems/combat.js';
 import { renderBattle } from './ui/battle-ui.js';
@@ -18,13 +19,44 @@ import { createQuestLog } from './ui/quest-ui.js';
 import {
   assignQuest, recordKill, recordLevel, recordMapClear,
 } from './systems/quest.js';
+import { loadLang, t } from './systems/lang.js';
+import { createLanding, hasSave } from './ui/landing.js';
 
-async function start() {
+const SAVE_KEY = 'shadowGate.save';
+const LANG_KEY = 'shadowGate.lang';
+const SAVE_VERSION = 1;
+
+async function boot() {
   const canvas = document.getElementById('game');
   const ctx = setupCanvas(canvas);
   const input = createInput();
-  const camera = createCamera();
 
+  let savedLang = 'fr';
+  try { savedLang = localStorage.getItem(LANG_KEY) ?? 'fr'; } catch { /* ignore */ }
+  await loadLang(savedLang);
+
+  const action = await runLanding(ctx, input);
+  await startGame(ctx, input, action);
+}
+
+function runLanding(ctx, input) {
+  return new Promise((resolve) => {
+    const landing = createLanding();
+    let last = performance.now();
+    function frame(now) {
+      const dt = Math.min((now - last) / 1000, 0.1);
+      last = now;
+      landing.update(dt, input);
+      landing.render(ctx);
+      input.endFrame();
+      if (landing.isReadyToExit()) resolve(landing.action);
+      else requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  });
+}
+
+async function startGame(ctx, input, mode) {
   const [npcDefs, skillDefs, monsterDefs, itemDefs, questDefs] = await Promise.all([
     fetch('./src/data/npcs.json').then((r) => r.json()),
     fetch('./src/data/skills.json').then((r) => r.json()),
@@ -50,8 +82,12 @@ async function start() {
     };
   }
 
-  let { map, npcs, enemies } = await loadScene('town');
-  const player = createPlayer(map.spawn.x * map.tileSize, map.spawn.y * map.tileSize, skillDefs);
+  // Tracks defeated enemy indices per map so a scene reload (warp out + back)
+  // doesn't respawn enemies the player already cleared this session.
+  const defeatedByMap = {};
+  let map, npcs, enemies;
+  const player = createPlayer(0, 0, skillDefs);
+  const camera = createCamera();
   const dialog = createDialog();
   const notifications = createNotificationSystem();
   const transition = createTransition();
@@ -59,34 +95,154 @@ async function start() {
   const menu = createMenu();
   const questLog = createQuestLog();
 
-  // The System assigns daily quests on session start.
-  const dailyQuests = ['killGoblins', 'reachLevel3', 'clearDungeonE'];
-  for (const id of dailyQuests) {
-    if (assignQuest(player, id)) {
-      const def = questDefs[id];
-      notifications.push({
-        text: `New quest: ${def.name}`,
-        color: '#a070ff',
-        duration: 4,
-      });
+  function applyDefeatedFor(mapName) {
+    const idx = defeatedByMap[mapName] ?? [];
+    for (const i of idx) if (enemies[i]) enemies[i].defeated = true;
+  }
+  function captureDefeatedFor(mapName) {
+    defeatedByMap[mapName] = enemies
+      .map((e, i) => (e.defeated ? i : -1))
+      .filter((i) => i >= 0);
+  }
+
+  if (mode === 'continue' && hasSave()) {
+    const saved = readSave();
+    if (saved) await applySave(saved);
+    else await beginNewGame();
+  } else {
+    await beginNewGame();
+  }
+
+  async function beginNewGame() {
+    ({ map, npcs, enemies } = await loadScene('town'));
+    player.x = map.spawn.x * map.tileSize;
+    player.y = map.spawn.y * map.tileSize;
+    player.facing = 'down';
+
+    const dailyQuests = ['killGoblins', 'reachLevel3', 'clearDungeonE'];
+    for (const id of dailyQuests) {
+      if (assignQuest(player, id)) {
+        notifications.push({
+          text: t('system.newQuest', { name: t(`quest.${id}.name`) }),
+          color: '#a070ff',
+          duration: 4,
+        });
+      }
     }
   }
 
+  async function applySave(saved) {
+    ({ map, npcs, enemies } = await loadScene(saved.map ?? 'town'));
+    for (const name in (saved.defeatedByMap ?? {})) {
+      defeatedByMap[name] = [...saved.defeatedByMap[name]];
+    }
+    applyDefeatedFor(map.name);
+
+    const p = saved.player ?? {};
+    player.x = p.x ?? map.spawn.x * map.tileSize;
+    player.y = p.y ?? map.spawn.y * map.tileSize;
+    player.facing = p.facing ?? 'down';
+    for (const key of ['level', 'xp', 'gold', 'hp', 'maxHp', 'mp', 'maxMp', 'atk', 'def', 'spd', 'int']) {
+      if (p.stats && key in p.stats) player.stats[key] = p.stats[key];
+    }
+    player.skills = [...(p.skills ?? player.skills)];
+    player.items = (p.items ?? []).map((s) => ({ id: s.id, qty: s.qty }));
+    player.equipment = { weapon: null, armor: null, ...(p.equipment ?? {}) };
+    player.quests = (p.quests ?? []).map((q) => ({ ...q }));
+    player.shadows = (p.shadows ?? []).map((s) => {
+      const md = monsterDefs.monsters[s.monsterId];
+      if (!md) return null;
+      return createShadow({ id: s.monsterId, type: md.type, sprite: md.sprite }, player.x, player.y);
+    }).filter(Boolean);
+    player.history = [];
+  }
+
+  function captureSave() {
+    captureDefeatedFor(map.name);
+    return {
+      version: SAVE_VERSION,
+      map: map.name,
+      defeatedByMap: { ...defeatedByMap },
+      player: {
+        x: player.x,
+        y: player.y,
+        facing: player.facing,
+        stats: {
+          level: player.stats.level, xp: player.stats.xp, gold: player.stats.gold,
+          hp: player.stats.hp, maxHp: player.stats.maxHp,
+          mp: player.stats.mp, maxMp: player.stats.maxMp,
+          atk: player.stats.atk, def: player.stats.def,
+          spd: player.stats.spd, int: player.stats.int,
+        },
+        skills: [...player.skills],
+        items: player.items.map((s) => ({ id: s.id, qty: s.qty })),
+        equipment: { ...player.equipment },
+        shadows: player.shadows.map((s) => ({ monsterId: s.monsterId })),
+        quests: player.quests.map((q) => ({ id: q.id, progress: q.progress, complete: q.complete })),
+      },
+    };
+  }
+
+  function readSave() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch { return null; }
+  }
+
+  function saveNow() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(captureSave())); }
+    catch { /* quota or disabled — ignore */ }
+  }
+
+  // Snap camera & shadows now that we have a player position.
   camera.x = player.x + player.w / 2 - LOGICAL_WIDTH / 2;
   camera.y = player.y + player.h / 2 - LOGICAL_HEIGHT / 2;
+  for (const s of player.shadows) { s.x = player.x; s.y = player.y; }
 
-  let state = 'overworld'; // 'overworld' | 'dialog' | 'battle' | 'transition' | 'menu' | 'shop' | 'quests'
+  // Start in 'transition' so the post-landing fade-in actually animates;
+  // it flips to 'overworld' when the fade completes.
+  let state = 'transition';
   let battle = null;
-  // Tracks the warp tile (as "x,y") the player is currently standing on so
-  // we don't re-trigger every frame they remain on it.
   let currentWarpKey = null;
-  // Remembered between starting an NPC dialog and the dialog ending, so we
-  // can route to a follow-up action (open shop, etc.).
   let pendingNpcAction = null;
 
-  // Each shadow reads a position from `i * OFFSET` fixed steps ago, so they
-  // trace the player's path in a conga line. Empty history (after a teleport)
-  // means everyone sits on the player until movement refills the buffer.
+  function emitQuestComplete(ev) {
+    notifications.push({
+      text: t('system.questComplete', {
+        name: t(`quest.${ev.id}.name`),
+        xp: ev.xp,
+        gold: ev.gold,
+      }),
+      color: '#80e0ff',
+      duration: 5,
+    });
+    if (ev.gold) player.stats.gold += ev.gold;
+    if (ev.xp) applyXP(ev.xp);
+  }
+
+  function applyXP(amount) {
+    const events = gainXP(player, amount, skillDefs);
+    for (const ev of events) {
+      if (ev.type === 'levelUp') {
+        notifications.push({ text: t('system.levelUp', { level: ev.level }) });
+      } else if (ev.type === 'rankUp') {
+        notifications.push({
+          text: t('system.rankUp', { rank: ev.rank }),
+          color: rankColor(ev.rank),
+          duration: 4.5,
+        });
+      } else if (ev.type === 'skillUnlock') {
+        notifications.push({
+          text: t('system.skillUnlock', { name: t(`skill.${ev.key}.name`) }),
+          color: '#80e0ff',
+        });
+      }
+    }
+    for (const qev of recordLevel(player, questDefs)) emitQuestComplete(qev);
+  }
+
   const SHADOW_LAG_STEPS = 18;
   function updateShadowChain() {
     for (let i = 0; i < player.shadows.length; i++) {
@@ -94,54 +250,15 @@ async function start() {
       const s = player.shadows[i];
       if (idx >= 0) {
         const p = player.history[idx];
-        s.x = p.x;
-        s.y = p.y;
-        s.facing = p.facing;
-        s.moving = p.moving;
+        s.x = p.x; s.y = p.y; s.facing = p.facing; s.moving = p.moving;
       } else {
-        s.x = player.x;
-        s.y = player.y;
+        s.x = player.x; s.y = player.y;
       }
     }
   }
-
-  function emitQuestComplete(ev) {
-    notifications.push({
-      text: `Quest complete: ${ev.name}! +${ev.xp} XP, +${ev.gold} gold.`,
-      color: '#80e0ff',
-      duration: 5,
-    });
-    if (ev.gold) player.stats.gold += ev.gold;
-    if (ev.xp) applyXP(ev.xp); // recurses through level checks
-  }
-
-  // Single entry point for all XP grants (kills + quest rewards). Cascades
-  // level-ups through gainXP, surfaces level/rank/skill notifications, then
-  // re-checks level-based quests in case the new level satisfies them.
-  function applyXP(amount) {
-    const events = gainXP(player, amount, skillDefs);
-    for (const ev of events) {
-      if (ev.type === 'levelUp') {
-        notifications.push({ text: `Level up! You are now Level ${ev.level}.` });
-      } else if (ev.type === 'rankUp') {
-        notifications.push({
-          text: `Rank promotion! You are now ${ev.rank}-Rank.`,
-          color: rankColor(ev.rank),
-          duration: 4.5,
-        });
-      } else if (ev.type === 'skillUnlock') {
-        notifications.push({ text: `New skill acquired: ${ev.name}`, color: '#80e0ff' });
-      }
-    }
-    for (const qev of recordLevel(player, questDefs)) emitQuestComplete(qev);
-  }
-
   function snapShadowsToPlayer() {
     player.history = [];
-    for (const s of player.shadows) {
-      s.x = player.x;
-      s.y = player.y;
-    }
+    for (const s of player.shadows) { s.x = player.x; s.y = player.y; }
   }
 
   function handleBattleEnd() {
@@ -160,11 +277,12 @@ async function start() {
 
       if (battle.shadowExtracted) {
         notifications.push({
-          text: `${battle.shadowExtracted.name} joined your shadow army.`,
+          text: t('system.shadowJoined', { name: battle.shadowExtracted.name }),
           color: '#a070ff',
           duration: 3.5,
         });
       }
+      saveNow();
     } else if (battle.outcome === 'defeat') {
       player.x = map.spawn.x * map.tileSize;
       player.y = map.spawn.y * map.tileSize;
@@ -173,6 +291,7 @@ async function start() {
       camera.x = player.x + player.w / 2 - LOGICAL_WIDTH / 2;
       camera.y = player.y + player.h / 2 - LOGICAL_HEIGHT / 2;
       snapShadowsToPlayer();
+      saveNow();
     } else if (battle.outcome === 'run') {
       battle.enemyOverworld.disengaged = true;
     }
@@ -183,19 +302,21 @@ async function start() {
     if (transition.isActive()) return;
     state = 'transition';
     transition.beginPending();
+    captureDefeatedFor(map.name);
     const scene = await loadScene(warp.to);
     transition.beginFade(() => {
       map = scene.map;
       npcs = scene.npcs;
       enemies = scene.enemies;
+      applyDefeatedFor(map.name);
       player.x = warp.spawnX * map.tileSize;
       player.y = warp.spawnY * map.tileSize;
       if (warp.facing) player.facing = warp.facing;
-      // Mark the destination tile so we don't immediately re-trigger.
       currentWarpKey = `${warp.spawnX},${warp.spawnY}`;
       camera.x = player.x + player.w / 2 - LOGICAL_WIDTH / 2;
       camera.y = player.y + player.h / 2 - LOGICAL_HEIGHT / 2;
       snapShadowsToPlayer();
+      saveNow();
     });
   }
 
@@ -234,10 +355,10 @@ async function start() {
         }
       } else if (state === 'shop') {
         shop.update(FIXED_DT, input, player, itemDefs);
-        if (!shop.active) state = 'overworld';
+        if (!shop.active) { state = 'overworld'; saveNow(); }
       } else if (state === 'menu') {
         menu.update(FIXED_DT, input, player, itemDefs);
-        if (!menu.active) state = 'overworld';
+        if (!menu.active) { state = 'overworld'; saveNow(); }
       } else if (state === 'quests') {
         questLog.update(FIXED_DT, input);
         if (!questLog.active) state = 'overworld';
@@ -250,13 +371,8 @@ async function start() {
           if (e.disengaged && !overlap(player, e)) e.disengaged = false;
         }
 
-        if (input.menuPressed()) {
-          menu.open();
-          state = 'menu';
-        } else if (input.questPressed()) {
-          questLog.open();
-          state = 'quests';
-        }
+        if (input.menuPressed()) { menu.open(); state = 'menu'; }
+        else if (input.questPressed()) { questLog.open(); state = 'quests'; }
 
         if (state === 'overworld' && input.interactPressed()) {
           const npc = findInteractable(player, npcs, map.tileSize);
@@ -269,7 +385,7 @@ async function start() {
               player.stats.hp = player.stats.maxHp;
               player.stats.mp = player.stats.maxMp;
               if (beforeHp < player.stats.maxHp || beforeMp < player.stats.maxMp) {
-                notifications.push({ text: 'Healed to full.', color: '#80c0ff' });
+                notifications.push({ text: t('system.healedFull'), color: '#80c0ff' });
               }
             }
             dialog.start(npc.name, npc.dialog, npc.speakerColor);
@@ -277,7 +393,6 @@ async function start() {
           }
         }
 
-        // Warp detection (after movement so we react to where the player landed).
         if (state === 'overworld') {
           const warp = warpAt(player, map.warps, map.tileSize);
           const wkey = warp ? `${warp.x},${warp.y}` : null;
@@ -285,7 +400,7 @@ async function start() {
             currentWarpKey = wkey;
             if (warp) {
               if (warp.minLevel && player.stats.level < warp.minLevel) {
-                dialog.start('System', [warp.blockedMessage ?? 'Locked.'], '#a070ff');
+                dialog.start('System', [warp.blockedMessage ?? t('dialog.locked')], '#a070ff');
                 state = 'dialog';
               } else {
                 triggerWarp(warp);
@@ -333,7 +448,14 @@ async function start() {
 
     requestAnimationFrame(frame);
   }
+
+  // Skip the pending/fade-out half and start the game fully black, fading in.
+  transition.phase = 'fade-in';
+  transition.alpha = 1;
+  transition.t = 0;
+  transition.pendingSwap = null;
+
   requestAnimationFrame(frame);
 }
 
-start();
+boot();

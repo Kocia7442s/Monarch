@@ -1,27 +1,5 @@
 {
-  "killGoblins": {
-    "name": "Cull the Goblin Pack",
-    "desc": "Defeat 3 Goblins.",
-    "type": "kill",
-    "target": "goblin",
-    "count": 3,
-    "rewardXp": 20,
-    "rewardGold": 30
-  },
-  "reachLevel3": {
-    "name": "Rising Hunter",
-    "desc": "Reach Level 3.",
-    "type": "level",
-    "level": 3,
-    "rewardXp": 25,
-    "rewardGold": 40
-  },
-  "clearDungeonE": {
-    "name": "E-Rank Gate Clear",
-    "desc": "Defeat every enemy in the E-Rank dungeon.",
-    "type": "clear",
-    "map": "dungeon-e",
-    "rewardXp": 40,
-    "rewardGold": 60
-  }
+  "killGoblins":   { "type": "kill",  "target": "goblin",    "count": 3, "rewardXp": 20, "rewardGold": 30 },
+  "reachLevel3":   { "type": "level", "level": 3,                        "rewardXp": 25, "rewardGold": 40 },
+  "clearDungeonE": { "type": "clear", "map": "dungeon-e",                "rewardXp": 40, "rewardGold": 60 }
 }

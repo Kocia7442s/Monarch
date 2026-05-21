@@ -1,60 +1,29 @@
 {
   "guildmaster": {
-    "name": "Guildmaster",
     "speakerColor": "#a070ff",
-    "sprite": { "hair": "#6040a0", "skin": "#d8b890", "body": "#404060", "legs": "#303040", "eyes": "#ffcc00" },
-    "dialog": [
-      "Welcome to the Hunter Guild.",
-      "Even the weakest E-rank hunter can become legend.",
-      "Train hard. The System rewards those who push through."
-    ]
+    "sprite": { "hair": "#6040a0", "skin": "#d8b890", "body": "#404060", "legs": "#303040", "eyes": "#ffcc00" }
   },
   "shopkeeper": {
-    "name": "Shopkeeper",
     "kind": "shop",
     "shop": ["hpPotion", "mpPotion", "antidote", "rustyBlade", "leatherVest"],
     "speakerColor": "#ffb060",
-    "sprite": { "hair": "#8b4513", "skin": "#e8c8a8", "body": "#c87030", "legs": "#804020", "eyes": "#fff080" },
-    "dialog": [
-      "Welcome! Have a look at the goods."
-    ]
+    "sprite": { "hair": "#8b4513", "skin": "#e8c8a8", "body": "#c87030", "legs": "#804020", "eyes": "#fff080" }
   },
   "healer": {
-    "name": "Healer",
     "kind": "heal",
     "speakerColor": "#80c0ff",
-    "sprite": { "hair": "#c8d0ff", "skin": "#f0d8b8", "body": "#e8e8f0", "legs": "#b0b0c0", "eyes": "#80c0ff" },
-    "dialog": [
-      "Your wounds are mended. Be safe out there."
-    ]
+    "sprite": { "hair": "#c8d0ff", "skin": "#f0d8b8", "body": "#e8e8f0", "legs": "#b0b0c0", "eyes": "#80c0ff" }
   },
   "tarn": {
-    "name": "Tarn",
     "speakerColor": "#c0c0d0",
-    "sprite": { "hair": "#2a2a3a", "skin": "#d8b890", "body": "#5a4030", "legs": "#3a2a1a", "eyes": "#80c080" },
-    "dialog": [
-      "Welcome to the Hunter Guild bulletin.",
-      "Daily quest: Clear 5 enemies in any gate. Reward: 50 XP, 100 gold.",
-      "Active gates: E-rank (south-west), D-rank (south-east).",
-      "D-rank access requires Hunter level 4 or higher."
-    ]
+    "sprite": { "hair": "#2a2a3a", "skin": "#d8b890", "body": "#5a4030", "legs": "#3a2a1a", "eyes": "#80c080" }
   },
   "wanderer": {
-    "name": "Hunter",
     "speakerColor": "#80ff80",
-    "sprite": { "hair": "#1a1a2e", "skin": "#c8a888", "body": "#2030a0", "legs": "#1a1a30", "eyes": "#80ff80" },
-    "dialog": [
-      "You feel it too? That pressure from the south...",
-      "The gates have been more active lately. Be careful out there."
-    ]
+    "sprite": { "hair": "#1a1a2e", "skin": "#c8a888", "body": "#2030a0", "legs": "#1a1a30", "eyes": "#80ff80" }
   },
   "kid": {
-    "name": "Kid",
     "speakerColor": "#ffe080",
-    "sprite": { "hair": "#e0c060", "skin": "#f0d8b8", "body": "#50a050", "legs": "#408040", "eyes": "#80c0ff" },
-    "dialog": [
-      "Wow! Are you a real hunter?",
-      "I'm gonna be S-rank when I grow up!"
-    ]
+    "sprite": { "hair": "#e0c060", "skin": "#f0d8b8", "body": "#50a050", "legs": "#408040", "eyes": "#80c0ff" }
   }
 }

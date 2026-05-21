@@ -1,11 +1,14 @@
 import { drawEnemy } from './enemy-sprite.js';
+import { t } from '../systems/lang.js';
 
 // Shadow soldier extracted from a defeated enemy. Keeps the enemy's body shape
 // but its palette is blended toward purple. Follows the player via main.js's
 // trail-replay; this entity just holds position and renders itself.
 export function createShadow(source, x, y) {
+  const monsterId = source.id;
   return {
-    name: source.name,
+    monsterId,
+    name: t(`monster.${monsterId}.name`),
     type: source.type ?? 'humanoid',
     sprite: tintShadow(source.sprite),
     x, y,

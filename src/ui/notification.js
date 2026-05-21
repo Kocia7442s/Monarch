@@ -1,11 +1,11 @@
 import { LOGICAL_WIDTH } from '../engine/canvas.js';
 import { drawPanel } from './panel.js';
+import { t } from '../systems/lang.js';
 
 // "[SYSTEM]" toast: slides down from above on appear, holds, fades out.
 // Toasts stack vertically. Rendered last so they overlay everything.
 
 const FONT = '12px "Courier New", monospace';
-const PREFIX = '[SYSTEM]';
 const PREFIX_COLOR = '#a070ff';
 
 const TOAST_W = 360;
@@ -20,12 +20,12 @@ export function createNotificationSystem() {
 
   return {
     push({ text, color = '#e8e8f0', duration = DEFAULT_DURATION }) {
-      toasts.push({ text, color, duration, t: 0 });
+      toasts.push({ text, color, duration, elapsed: 0 });
     },
 
     update(dt) {
-      for (const t of toasts) t.t += dt;
-      while (toasts.length > 0 && toasts[0].t >= toasts[0].duration) {
+      for (const toast of toasts) toast.elapsed += dt;
+      while (toasts.length > 0 && toasts[0].elapsed >= toasts[0].duration) {
         toasts.shift();
       }
     },
@@ -38,19 +38,20 @@ export function createNotificationSystem() {
 
       const baseX = Math.floor((LOGICAL_WIDTH - TOAST_W) / 2);
       let y = 10;
-      for (const t of toasts) {
-        const alpha = computeAlpha(t);
-        const yOffset = computeSlideOffset(t);
+      const prefix = t('system.prefix');
+      const prefixW = ctx.measureText(prefix + ' ').width;
+      for (const toast of toasts) {
+        const alpha = computeAlpha(toast);
+        const yOffset = computeSlideOffset(toast);
         const drawY = y + yOffset;
 
         ctx.globalAlpha = alpha;
         drawPanel(ctx, baseX, drawY, TOAST_W, TOAST_H);
 
         ctx.fillStyle = PREFIX_COLOR;
-        ctx.fillText(PREFIX, baseX + 10, drawY + 7);
-        const prefixW = ctx.measureText(PREFIX + ' ').width;
-        ctx.fillStyle = t.color;
-        ctx.fillText(t.text, baseX + 10 + prefixW, drawY + 7);
+        ctx.fillText(prefix, baseX + 10, drawY + 7);
+        ctx.fillStyle = toast.color;
+        ctx.fillText(toast.text, baseX + 10 + prefixW, drawY + 7);
 
         y += TOAST_H + STACK_GAP;
       }
@@ -59,13 +60,13 @@ export function createNotificationSystem() {
   };
 }
 
-function computeAlpha(t) {
-  if (t.t < SLIDE) return t.t / SLIDE;
-  if (t.t > t.duration - FADE) return Math.max(0, (t.duration - t.t) / FADE);
+function computeAlpha(toast) {
+  if (toast.elapsed < SLIDE) return toast.elapsed / SLIDE;
+  if (toast.elapsed > toast.duration - FADE) return Math.max(0, (toast.duration - toast.elapsed) / FADE);
   return 1;
 }
 
-function computeSlideOffset(t) {
-  if (t.t < SLIDE) return Math.floor((1 - t.t / SLIDE) * -16);
+function computeSlideOffset(toast) {
+  if (toast.elapsed < SLIDE) return Math.floor((1 - toast.elapsed / SLIDE) * -16);
   return 0;
 }

@@ -1,3 +1,5 @@
+import { t } from './lang.js';
+
 // Inventory state lives on the player: `items: [{id, qty}]` and
 // `equipment: { weapon, armor }`. Items here use string IDs that resolve
 // against the items.json defs the caller passes in.
@@ -22,18 +24,18 @@ export function useItem(player, def) {
       const before = player.stats.hp;
       player.stats.hp = Math.min(player.stats.maxHp, before + def.amount);
       const healed = player.stats.hp - before;
-      return { ok: true, message: healed > 0 ? `Recovered ${healed} HP.` : 'HP is already full.' };
+      return { ok: true, message: healed > 0 ? t('combat.recoveredHP', { amt: healed }) : t('combat.hpFull') };
     }
     case 'heal-mp': {
       const before = player.stats.mp;
       player.stats.mp = Math.min(player.stats.maxMp, before + def.amount);
       const healed = player.stats.mp - before;
-      return { ok: true, message: healed > 0 ? `Recovered ${healed} MP.` : 'MP is already full.' };
+      return { ok: true, message: healed > 0 ? t('combat.recoveredMP', { amt: healed }) : t('combat.mpFull') };
     }
     case 'cure-poison':
-      return { ok: true, message: 'Nothing to cure.' };
+      return { ok: true, message: t('combat.nothingToCure') };
     default:
-      return { ok: false, message: 'Cannot use this item.' };
+      return { ok: false, message: t('combat.cantUseItem') };
   }
 }
 

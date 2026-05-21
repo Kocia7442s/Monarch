@@ -1,19 +1,19 @@
 import { drawCharacter } from './character-sprite.js';
+import { t, tArray } from '../systems/lang.js';
 
-// def comes from npcs.json (name, dialog, sprite colors).
-// instance comes from the map's "npcs" array (id, x, y, facing).
+// `def` comes from npcs.json (sprite, kind, shop, speakerColor).
+// Display strings (name/dialog) live in lang files keyed by `npc.<id>.*`.
 export function createNPC(def, instance, tileSize = 16) {
   return {
     id: instance.id,
-    name: def.name,
+    name: t(`npc.${instance.id}.name`),
+    dialog: tArray(`npc.${instance.id}.dialog`),
     kind: def.kind ?? 'normal',
     shop: def.shop ?? null,
     speakerColor: def.speakerColor ?? '#a070ff',
     sprite: def.sprite,
-    dialog: def.dialog ?? [],
     tileX: instance.x,
     tileY: instance.y,
-    // Match the player's 12x14 hitbox centered in the 16x16 tile.
     x: instance.x * tileSize + 2,
     y: instance.y * tileSize + 2,
     w: 12,
@@ -35,7 +35,6 @@ export function createNPC(def, instance, tileSize = 16) {
   };
 }
 
-// Returns the NPC standing on the tile directly in front of the player, or null.
 export function findInteractable(player, npcs, tileSize) {
   const px = player.x + player.w / 2;
   const py = player.y + player.h / 2;

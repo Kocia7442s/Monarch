@@ -1,12 +1,11 @@
 {
   "moves": {
-    "scratch": { "name": "Scratch",   "power": 3 },
-    "club":    { "name": "Club Bash", "power": 4 },
-    "bite":    { "name": "Bite",      "power": 5 }
+    "scratch": { "power": 3 },
+    "club":    { "power": 4 },
+    "bite":    { "power": 5 }
   },
   "monsters": {
     "goblin": {
-      "name": "Goblin",
       "type": "humanoid",
       "hp": 18, "mp": 0, "atk": 4, "def": 1, "spd": 3,
       "xp": 8, "gold": 5,
@@ -14,7 +13,6 @@
       "sprite": { "body": "#5a8a3a", "head": "#7aaa5a", "eyes": "#ff4040", "weapon": "#8b6535" }
     },
     "wolf": {
-      "name": "Wolf",
       "type": "quadruped",
       "hp": 22, "mp": 0, "atk": 5, "def": 2, "spd": 5,
       "xp": 12, "gold": 7,

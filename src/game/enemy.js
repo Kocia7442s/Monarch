@@ -1,10 +1,11 @@
 import { drawEnemy } from './enemy-sprite.js';
+import { t } from '../systems/lang.js';
 
 // def comes from monsters.json; instance comes from the map's "enemies" array.
 export function createEnemy(def, instance, tileSize = 16) {
   return {
     id: instance.id,
-    name: def.name,
+    name: t(`monster.${instance.id}.name`),
     type: def.type ?? 'humanoid',
     sprite: def.sprite,
     stats: {
