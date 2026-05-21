@@ -1,0 +1,41 @@
+{
+  "name": "dungeon-e",
+  "width": 36,
+  "height": 28,
+  "tileSize": 16,
+  "fill": "dungeonWall",
+  "border": false,
+  "spawn": { "x": 8, "y": 5 },
+
+  "rects": [
+    { "tile": "dungeonFloor", "x": 4,  "y": 4,  "w": 8,  "h": 6 },
+    { "tile": "dungeonFloor", "x": 22, "y": 4,  "w": 10, "h": 6 },
+    { "tile": "dungeonFloor", "x": 4,  "y": 16, "w": 8,  "h": 6 },
+    { "tile": "dungeonFloor", "x": 20, "y": 15, "w": 12, "h": 9 }
+  ],
+
+  "paths": [
+    { "x1": 12, "y1": 6,  "x2": 21, "y2": 6,  "tile": "dungeonFloor" },
+    { "x1": 7,  "y1": 10, "x2": 7,  "y2": 15, "tile": "dungeonFloor" },
+    { "x1": 12, "y1": 18, "x2": 19, "y2": 18, "tile": "dungeonFloor" },
+    { "x1": 26, "y1": 10, "x2": 26, "y2": 14, "tile": "dungeonFloor" }
+  ],
+
+  "decorations": [
+    { "tile": "dungeonExit", "positions": [[8, 4]] }
+  ],
+
+  "warps": [
+    { "x": 8, "y": 4, "to": "town", "spawnX": 14, "spawnY": 38, "facing": "up" }
+  ],
+
+  "enemies": [
+    { "id": "goblin", "x": 24, "y": 6,  "facing": "left" },
+    { "id": "goblin", "x": 28, "y": 6,  "facing": "left" },
+    { "id": "wolf",   "x": 6,  "y": 18, "facing": "right" },
+    { "id": "wolf",   "x": 9,  "y": 20, "facing": "right" },
+    { "id": "goblin", "x": 24, "y": 19, "facing": "down" },
+    { "id": "wolf",   "x": 28, "y": 21, "facing": "left" },
+    { "id": "goblin", "x": 22, "y": 22, "facing": "right" }
+  ]
+}

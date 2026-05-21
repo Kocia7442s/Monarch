@@ -1,0 +1,10 @@
+{
+  "attack":          { "name": "Attack",            "power": 0,  "mp": 0,  "unlock": 0,  "desc": "Basic strike." },
+  "shadowSlash":     { "name": "Shadow Slash",      "power": 4,  "mp": 3,  "unlock": 1,  "desc": "Quick shadow blade." },
+  "recovery":        { "name": "Recovery",          "power": 0,  "mp": 5,  "unlock": 1,  "desc": "Heals 15 HP.", "effect": "heal", "amount": 15 },
+  "arise":           { "name": "Arise",             "power": 0,  "mp": 0,  "unlock": 2,  "desc": "Extract a shadow soldier from a defeated enemy.", "passive": true },
+  "flameStrike":     { "name": "Flame Strike",      "power": 7,  "mp": 5,  "unlock": 3,  "desc": "Hurls a burning slash." },
+  "shadowBolt":      { "name": "Shadow Bolt",       "power": 9,  "mp": 7,  "unlock": 5,  "desc": "Bolts of shadow pierce the foe." },
+  "rulersAuthority": { "name": "Ruler's Authority", "power": 14, "mp": 14, "unlock": 8,  "desc": "Telekinetic crushing force." },
+  "domain":          { "name": "Domain",            "power": 20, "mp": 22, "unlock": 12, "desc": "Crushes all within your domain." }
+}

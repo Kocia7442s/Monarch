@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Solo Leveling RPG</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #0a0a14;
+      overflow: hidden;
+      color: #cdd;
+      font-family: system-ui, sans-serif;
+    }
+    #game-wrap {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas#game {
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      background: #000;
+      box-shadow: 0 0 24px rgba(120, 80, 220, 0.25);
+    }
+  </style>
+</head>
+<body>
+  <div id="game-wrap">
+    <canvas id="game"></canvas>
+  </div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
